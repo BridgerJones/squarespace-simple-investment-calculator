@@ -1,0 +1,215 @@
+<div id="investment-calculator">
+  <h3>Investment Earnings Calculator</h3>
+  
+  <form id="investmentForm">
+    <label for="investmentAmount">Initial Investment Amount ($):</label>
+    <input type="number" id="investmentAmount" name="investmentAmount" min="30000" required>
+    <br/>
+    <label>Annual Return Rate (%):</label> 12% (fixed)
+    <br/>
+    <button type="submit">Calculate</button>
+  </form>
+  
+  <div id="results" style="margin-top:20px;">
+    <h4>Results:</h4>
+    <p><strong>Monthly Payment Received:</strong> $<span id="monthlyPayment">0.00</span></p>
+    <h5>Year 1 Earnings Breakdown</h5>
+    <ul>
+      <li>Total Year 1 Earnings (Principal Return + Profit): $<span id="year1TotalEarnings">0.00</span></li>
+      <li>Principal Returned: $<span id="year1PrincipalReturned">0.00</span></li>
+      <li>Profit Earned: $<span id="year1Profit">0.00</span></li>
+    </ul>
+
+    <h5>5-Year Earnings Breakdown</h5>
+    <table border="1" cellpadding="5" cellspacing="0" id="yearlyBreakdown" style="border-collapse: collapse; width: 100%;">
+      <thead>
+        <tr>
+          <th>Year</th>
+          <th>Principal Returned ($)</th>
+          <th>Profit Earned ($)</th>
+          <th>Total Earnings ($)</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+
+    <p><strong>Months Until You Can Roll Into New Investment: </strong><span id="rollMonths">0</span></p>
+  </div>
+  
+  <canvas id="earningsChart" width="600" height="300" style="margin-top: 20px;"></canvas>
+</div>
+
+<!-- Chart.js CDN -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<script>
+  (function(){
+    const form = document.getElementById('investmentForm');
+    const monthlyPaymentEl = document.getElementById('monthlyPayment');
+    const y1TotalEarningsEl = document.getElementById('year1TotalEarnings');
+    const y1PrincipalReturnedEl = document.getElementById('year1PrincipalReturned');
+    const y1ProfitEl = document.getElementById('year1Profit');
+    const rollMonthsEl = document.getElementById('rollMonths');
+    const yearlyBreakdownBody = document.querySelector('#yearlyBreakdown tbody');
+    const ctx = document.getElementById('earningsChart').getContext('2d');
+
+    let chart;
+
+    // Format numbers to USD with 2 decimals
+    function formatUSD(num) {
+      return num.toLocaleString('en-US', {minimumFractionDigits:2, maximumFractionDigits:2});
+    }
+
+    // Calculate fixed monthly payment amount using amortization-style formula
+    // rate = monthly return rate (decimal)
+    // nper = total number payments
+    // pv = initial investment amount
+    function calculateMonthlyPayment(rate, nper, pv) {
+      if(rate === 0) return pv / nper;
+      return (rate * pv) / (1 - Math.pow(1 + rate, -nper));
+    }
+
+    form.addEventListener('submit', function(e){
+      e.preventDefault();
+
+      const initialInvestment = parseFloat(form.investmentAmount.value);
+      const annualReturnRate = 0.12;  // fixed 12%
+      const totalMonths = 60;
+      const monthlyRate = annualReturnRate / 12;
+
+      if(initialInvestment < 30000) {
+        alert('Initial investment must be at least $30,000.');
+        return;
+      }
+
+      // Calculate the fixed monthly payment (your monthly earnings)
+      const monthlyPayment = calculateMonthlyPayment(monthlyRate, totalMonths, initialInvestment);
+
+      let remainingPrincipal = initialInvestment;
+      let monthlyPrincipalReturns = [];
+      let monthlyProfits = [];
+
+      for(let month=1; month <= totalMonths; month++) {
+        // Profit earned is interest portion on remaining principal
+        const profitForMonth = remainingPrincipal * monthlyRate;
+        // Principal returned portion is monthly payment minus profit
+        let principalReturned = monthlyPayment - profitForMonth;
+
+        // Prevent negative principal in last month(s)
+        if(principalReturned > remainingPrincipal) principalReturned = remainingPrincipal;
+
+        monthlyProfits.push(profitForMonth);
+        monthlyPrincipalReturns.push(principalReturned);
+
+        remainingPrincipal -= principalReturned;
+        if(remainingPrincipal < 0) remainingPrincipal = 0;
+      }
+
+      // Show monthly payment received (the monthly earnings)
+      monthlyPaymentEl.textContent = formatUSD(monthlyPayment);
+
+      // Calculate yearly breakdown - sums of 12 months each year
+      const yearlyPrincipalReturned = [];
+      const yearlyProfit = [];
+      const yearlyTotalEarnings = [];
+
+      for(let year=0; year < 5; year++){
+        let sumPrincipal = 0;
+        let sumProfit = 0;
+        for(let m=0; m<12; m++){
+          sumPrincipal += monthlyPrincipalReturns[year*12 + m];
+          sumProfit += monthlyProfits[year*12 + m];
+        }
+        yearlyPrincipalReturned.push(sumPrincipal);
+        yearlyProfit.push(sumProfit);
+        yearlyTotalEarnings.push(sumPrincipal + sumProfit);
+      }
+
+      // Display year 1 breakdown
+      y1PrincipalReturnedEl.textContent = formatUSD(yearlyPrincipalReturned[0]);
+      y1ProfitEl.textContent = formatUSD(yearlyProfit[0]);
+      y1TotalEarningsEl.textContent = formatUSD(yearlyTotalEarnings[0]);
+
+      // Fill the 5-year table rows
+      yearlyBreakdownBody.innerHTML = '';
+      for(let y=0; y<5; y++) {
+        const row = document.createElement('tr');
+        row.innerHTML = `
+          <td>${y + 1}</td>
+          <td>${formatUSD(yearlyPrincipalReturned[y])}</td>
+          <td>${formatUSD(yearlyProfit[y])}</td>
+          <td>${formatUSD(yearlyTotalEarnings[y])}</td>
+        `;
+        yearlyBreakdownBody.appendChild(row);
+      }
+      
+      // Add totals row
+      const totalPrincipalReturned = yearlyPrincipalReturned.reduce((acc, val) => acc + val, 0);
+      const totalProfit = yearlyProfit.reduce((acc, val) => acc + val, 0);
+      const totalEarnings = yearlyTotalEarnings.reduce((acc, val) => acc + val, 0);
+
+      const totalRow = document.createElement('tr');
+      totalRow.style.fontWeight = 'bold';
+      totalRow.innerHTML = `
+        <td>Total</td>
+        <td>${formatUSD(totalPrincipalReturned)}</td>
+        <td>${formatUSD(totalProfit)}</td>
+        <td>${formatUSD(totalEarnings)}</td>
+      `;
+      yearlyBreakdownBody.appendChild(totalRow);
+
+      // Months until you can roll into another investment
+      // Formula: ceil(30000 / monthlyPayment)
+      const monthsToRoll = Math.ceil(30000 / monthlyPayment);
+      rollMonthsEl.textContent = `Month ${monthsToRoll}`;
+
+      // Draw a chart showing yearly principal returned and profit earned
+      const labels = ['Year 1', 'Year 2', 'Year 3', 'Year 4', 'Year 5'];
+
+      if(chart) chart.destroy();
+
+      chart = new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels: labels,
+          datasets: [
+            {
+              label: 'Principal Returned ($)',
+              data: yearlyPrincipalReturned,
+              backgroundColor: 'rgba(54, 162, 235, 0.7)'
+            },
+            {
+              label: 'Profit Earned ($)',
+              data: yearlyProfit,
+              backgroundColor: 'rgba(255, 99, 132, 0.7)'
+            }
+          ]
+        },
+        options: {
+          responsive: true,
+          scales: {
+            y: {
+              beginAtZero: true,
+              title: {
+                display: true,
+                text: 'Amount ($)'
+              }
+            }
+          },
+          plugins: {
+            tooltip: {
+              mode: 'index',
+              intersect: false
+            },
+            title: {
+              display: true,
+              text: 'Investment Earnings Breakdown Over 5 Years'
+            }
+          }
+        }
+      });
+
+    });
+
+  })();
+</script>
