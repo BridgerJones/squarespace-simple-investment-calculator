@@ -1,4 +1,4 @@
-<div id="investment-calculator" style="max-width:600px; font-family: Arial, sans-serif;">
+<div id="investment-calculator" style="max-width:600px; font-family: Lucida, sans-unicode;">
   <h3>Lending Model Calculator</h3>
 
   <form id="investmentForm" style="margin-bottom:1rem;">
@@ -10,7 +10,7 @@
     <label>Annual Rate of Return (%): </label><strong>12% fixed</strong><br/><br/>
 
     <button type="submit" 
-      style="background:#1a73e8;color:#fff;padding:0.5rem 1rem;border:none;border-radius:3px;cursor:pointer;">Calculate</button>
+      style="background:#233551;color:#fff;padding:0.5rem 1rem;border:none;border-radius:3px;cursor:pointer;">Calculate</button>
   </form>
 
   <div id="results" style="display:none; padding:1rem; border:1px solid #ddd; border-radius:5px; background:#fafafa;">
@@ -19,11 +19,11 @@
     <h4>5-Year Earnings Breakdown</h4> 
     <table border="1" cellpadding="5" cellspacing="0" style="border-collapse:collapse; width:100%; text-align:right;">
       <thead>
-        <tr style="background:#1a73e8; color:#fff;">
+        <tr style="background:#233551; color:#fff;">
           <th style="text-align:center;">Year</th>
-          <th>Principal ($)</th>
-          <th>Interest ($)</th>
-          <th>Total Earnings ($)</th>
+          <th>Principal</th>
+          <th>Interest</th>
+          <th>Total Earnings</th>
         </tr>
       </thead>
       <tbody id="yearlyBreakdown"></tbody>
@@ -126,9 +126,9 @@
         const row = document.createElement('tr');
         row.innerHTML = `
           <td style="text-align:center;">${y+1}</td>
-          <td>${formatUSD(yearlyPrincipal[y])}</td>
-          <td>${formatUSD(yearlyProfit[y])}</td>
-          <td>${formatUSD(yearlyTotal[y])}</td>
+          <td>$${formatUSD(yearlyPrincipal[y])}</td>
+          <td>$${formatUSD(yearlyProfit[y])}</td>
+          <td>$${formatUSD(yearlyTotal[y])}</td>
         `;
         yearlyBreakdownBody.appendChild(row);
       }
@@ -143,9 +143,9 @@
       totalRow.style.backgroundColor = '#f1f1f1';
       totalRow.innerHTML = `
         <td style="text-align:center;">Total</td>
-        <td>${formatUSD(totalPrincipal)}</td>
-        <td>${formatUSD(totalProfit)}</td>
-        <td>${formatUSD(totalEarnings)}</td>
+        <td>$${formatUSD(totalPrincipal)}</td>
+        <td>$${formatUSD(totalProfit)}</td>
+        <td>$${formatUSD(totalEarnings)}</td>
       `;
       yearlyBreakdownBody.appendChild(totalRow);
 
