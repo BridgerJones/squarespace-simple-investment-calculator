@@ -16,7 +16,6 @@
   <div id="results" style="display:none; padding:1rem; border:1px solid #ddd; border-radius:5px; background:#fafafa;">
     <p><strong>Monthly Earnings:</strong> $<span id="monthlyPayment">0.00</span></p>
 
-
     <h4>5-Year Earnings Breakdown</h4> 
     <table border="1" cellpadding="5" cellspacing="0" style="border-collapse:collapse; width:100%; text-align:right;">
       <thead>
@@ -34,6 +33,15 @@
 
     <canvas id="earningsChart" width="600" height="300" 
       style="margin-top:1rem; background:#fff; border:1px solid #ddd; border-radius:5px;"></canvas>
+
+    <!-- Media query to hide chart on mobile -->
+    <style>
+      @media screen and (max-width: 599px) {
+        #earningsChart {
+          display: none !important;
+        }
+      }
+    </style>
   </div>
 
   <!-- Chart.js CDN -->
