@@ -1,3 +1,5 @@
+import csv
+
 class LoanPortfolio:
     def __init__(self, principal, annual_interest_rate, term_years=5, periods_per_year=12):
         self.principal = principal
@@ -24,6 +26,7 @@ class LoanPortfolio:
         period_payment_total = 0
         period_interest_total = 0
         period_principal_total = 0
+        new_loans_issued = 0
         
         loans_to_remove = []
         for loan in self.active_loans:
@@ -60,6 +63,7 @@ class LoanPortfolio:
             self.active_loans.append({'start_period': self.current_period, 'remaining_balance': self.principal})
             self.cash_balance -= self.principal
             self.total_loans_issued += 1
+            new_loans_issued += 1
         
         return {
             'Period': self.current_period,
@@ -67,19 +71,22 @@ class LoanPortfolio:
             'Interest Collected': round(period_interest_total, 2),
             'Principal Repaid': round(period_principal_total, 2),
             'Active Loans': len(self.active_loans),
+            'New Loans Issued': new_loans_issued,
             'Cash Available for Loans': round(self.cash_balance, 2),
             'Total Loans Issued': self.total_loans_issued
         }
     
     def run_full_investment(self, total_periods):
         """
-        Simulate the investment for the given number of periods and return total earned.
+        Simulate the investment for the given number of periods and return total earned and full transaction history.
         """
         total_earned = 0.0
+        history = []
         for _ in range(total_periods):
             info = self.step()
             total_earned += info['Total Payment Received']
-        return total_earned
+            history.append(info)
+        return total_earned, history
 
 
 def main():
@@ -87,15 +94,27 @@ def main():
     annual_rate = 0.12  # fixed 12%
     term_years = 5
     periods_per_year = 12
-    term_periods = term_years * periods_per_year
+    total_periods = term_years * periods_per_year * 3  # simulate 3 terms (15 years)
     
     portfolio = LoanPortfolio(principal, annual_rate, term_years, periods_per_year)
     
-    # Simulate for 3 full loan terms (15 years)
-    total_periods_to_simulate = term_periods * 3
-    total_earned = portfolio.run_full_investment(total_periods_to_simulate)
+    print("\nRunning simulation with transaction history...")
+    total_earned, transaction_history = portfolio.run_full_investment(total_periods)
     
-    print(f"\nTotal amount earned (all payments received) over {total_periods_to_simulate} periods: ${total_earned:,.2f}")
+    print(f"\nTotal amount earned (all payments received) over {total_periods} periods: ${total_earned:,.2f}")
+    
+    # Write transaction history CSV
+    csv_filename = 'transaction_history.csv'
+    with open(csv_filename, mode='w', newline='') as csvfile:
+        fieldnames = ['Period', 'Total Payment Received', 'Interest Collected', 'Principal Repaid',
+                      'Active Loans', 'New Loans Issued', 'Cash Available for Loans', 'Total Loans Issued']
+        writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
+        writer.writeheader()
+        for record in transaction_history:
+            writer.writerow(record)
+    
+    print(f"Transaction history saved to '{csv_filename}'.")
+
 
 if __name__ == '__main__':
     main()
