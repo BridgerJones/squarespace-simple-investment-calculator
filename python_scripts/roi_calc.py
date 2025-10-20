@@ -89,19 +89,39 @@ class LoanPortfolio:
         return total_earned, history
 
 
+def input_with_default(prompt, default, cast_func=str):
+    """
+    Helper to prompt with a default. If input is empty, returns the default.
+    Applies casting function to input.
+    """
+    user_input = input(f"{prompt} [{default}]: ")
+    if user_input.strip() == '':
+        return default
+    else:
+        try:
+            return cast_func(user_input)
+        except Exception:
+            print(f"Invalid input. Using default value {default}.")
+            return default
+
+
 def main():
-    principal = float(input("Enter initial loan principal amount: "))
-    annual_rate = 0.12  # fixed 12%
-    term_years = 5
-    periods_per_year = 12
-    total_periods = term_years * periods_per_year * 3  # simulate 3 terms (15 years)
+    print("Loan Portfolio Simulation\n")
+    
+    principal = input_with_default("Enter initial loan principal amount", 1000.0, float)
+    annual_rate = input_with_default("Enter annual interest rate (as decimal, e.g., 0.12 for 12%)", 0.12, float)
+    term_years = input_with_default("Enter loan term in years", 5, int)
+    periods_per_year = input_with_default("Enter number of payment periods per year", 12, int)
+    n_years = input_with_default("Enter number of years to simulate", 15, int)
+    
+    total_periods = n_years * periods_per_year
     
     portfolio = LoanPortfolio(principal, annual_rate, term_years, periods_per_year)
     
-    print("\nRunning simulation with transaction history...")
+    print(f"\nRunning simulation for {n_years} years ({total_periods} periods) with transaction history...")
     total_earned, transaction_history = portfolio.run_full_investment(total_periods)
     
-    print(f"\nTotal amount earned (all payments received) over {total_periods} periods: ${total_earned:,.2f}")
+    print(f"\nTotal amount earned (all payments received) over {total_periods} periods ({n_years} years): ${total_earned:,.2f}")
     
     # Write transaction history CSV
     csv_filename = 'transaction_history.csv'
