@@ -47,7 +47,7 @@ def generate_pmt_schedule(principal: float, annual_interest_rate: float, periods
 
 def generate_lender_schedule(principal: float, annual_interest_rate: float, periods: int, periods_per_year: int = 12):
     """
-    Generates the lender's income schedule for the loan with rolling YTD (Year-To-Date) interest.
+    Generates the lender's income schedule for the loan with rolling YTD (Year-To-Date) interest and payments.
 
     Args:
         principal (float): Initial loan amount.
@@ -57,13 +57,14 @@ def generate_lender_schedule(principal: float, annual_interest_rate: float, peri
 
     Returns:
         List[Dict]: List where each dict contains:
-                    'Period', 'Payment Received', 'Interest Income', 'Principal Repaid', 'Remaining Principal', 'YTD Interest Income'.
+                    'Period', 'Payment Received', 'Interest Income', 'Principal Repaid', 'Remaining Principal',
+                    'YTD Interest Income', 'YTD Payment Received'.
     """
-    # Reuse the borrower schedule generator to get principal and interest per period
     borrower_schedule = generate_pmt_schedule(principal, annual_interest_rate, periods, periods_per_year)
 
     lender_schedule = []
     cumulative_interest = 0
+    cumulative_payment = 0
 
     for entry in borrower_schedule:
         period = entry['Period']
@@ -73,14 +74,16 @@ def generate_lender_schedule(principal: float, annual_interest_rate: float, peri
         remaining_principal = entry['Remaining Balance']
 
         cumulative_interest += interest_income
+        cumulative_payment += payment
 
         lender_schedule.append({
             'Period': period,
-            'Payment Received': payment,
+            'Payment Received': round(payment, 2),
             'Interest Income': round(interest_income, 2),
             'Principal Repaid': round(principal_repaid, 2),
             'Remaining Principal': round(remaining_principal, 2),
-            'YTD Interest Income': round(cumulative_interest, 2)
+            'YTD Interest Income': round(cumulative_interest, 2),
+            'YTD Payment Received': round(cumulative_payment, 2)
         })
 
     return lender_schedule
@@ -94,7 +97,7 @@ if __name__ == '__main__':
         print(row)
 
     print("\nLender's Income Schedule:")
-    # Lender's income schedule example
+    # Lender's income schedule example with rolling YTD payment balance
     lender_sched = generate_lender_schedule(30000, 0.12, 60)
     for row in lender_sched:
         print(row)
